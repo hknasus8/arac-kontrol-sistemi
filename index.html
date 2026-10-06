@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ARAÇ KONTROL MERKEZİ | 2026 PRO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --danger: #ef4444; --warning: #f59e0b; --success: #10b981;
+      --primary: #4f46e5; --dark: #0f172a; --bg: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); margin: 0; padding: 10px; color: var(--dark); display: flex; justify-content: center; }
+    
+    .app-container { width: 100%; max-width: 1400px; }
+
+    /* ÜST PANEL (DASHBOARD) */
+    .region-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .region-card { 
+      background: white; border-radius: 16px; padding: 15px; text-align: center; 
+      border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .region-card h4 { margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+    .region-card .count { font-size: 26px; font-weight: 800; margin: 5px 0; }
+
+    /* SIVI SEVİYE ÇUBUKLARI */
+    .level-container { width: 100%; min-width: 80px; }
+    .level-bar-bg { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+    .level-bar-fill { height: 100%; transition: width 0.5s ease-in-out; }
+    .level-text { font-size: 11px; font-weight: 700; display: block; }
+
+    /* FORM ALANI */
+    .form-wrapper { 
+      background: white; padding: 25px; border-radius: 20px; display: none; 
+      margin-bottom: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      border-top: 6px solid var(--primary);
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 12px; font-weight: 700; color: #475569; }
+    
+    input, select { 
+      padding: 10px; border-radius: 10px; border: 2px solid #e2e8f0; outline: none; 
+      font-size: 14px; font-weight: 600; background: #f8fafc;
+    }
+    input:focus { border-color: var(--primary); background: white; }
+
+    .not-group { grid-column: 1 / -1; }
+
+    .dsm-area { 
+      background: #fff7ed; padding: 15px; border-radius: 12px; border: 2px dashed #fdba74; 
+      margin-top: 5px; grid-column: 1 / -1; 
+    }
+
+    /* TABLO DÜZENİ */
+    .table-container { background: white; border-radius: 16px; overflow-x: auto; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    table { width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: fixed; }
+    th { background: #f8fafc; padding: 12px; font-size: 10px; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #eee; }
+    td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+
+    .plaka-box { background: white; border: 2px solid #333; border-radius: 4px; padding: 3px; font-weight: 800; border-left: 8px solid #003399; font-size: 13px; }
+
+    .btn { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; transition: 0.2s; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    .btn-pulse { animation: pulse-red 1.2s infinite; background: var(--danger) !important; color: white !important; }
+
+    .hata-banner {
+      display: none; background: #fef2f2; border: 2px solid var(--danger); color: #991b1b;
+      padding: 14px 16px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: 600;
+      align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .hata-banner button { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; padding: 25px; border-radius: 15px; width: 320px; text-align: center; }
+    
+    .smart-modal-content { background: #161b22; color: #c9d1d9; border: 2px solid #4f46e5; padding: 30px; border-radius: 15px; width: 90%; max-width: 420px; text-align: center; }
+    .smart-btn { background: #1c2128; border: 1px solid #30363d; color: white; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 13px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+    .smart-btn:hover { background: #30363d; }
+  </style>
+</head>
+<body>
+
+<!-- BÖLGE TABLO FİLTRELEME MODALI -->
+<div id="selection-modal" class="modal" style="display: none;">
+    <div class="smart-modal-content">
+        <h4 id="modal-title" style="color: #4f46e5; margin-top: 0; margin-bottom: 20px; font-size: 15px; letter-spacing: 1px; text-transform: uppercase;">BÖLGE SEÇİMİ</h4>
+        <button class="smart-btn" onclick="applySmartFilter('problem_no_dsm')">🚨 HATALARI GÖR</button>
+        <button class="smart-btn" onclick="applySmartFilter('all')">📊 TÜM KAYITLARIN HEPSİNİ GÖR</button>
+        <button style="margin-top: 15px; color: var(--danger); background: none; border: none; cursor: pointer; font-weight: bold;" onclick="closeSelectionModal()">İptal</button>
+    </div>
+</div>
+
+<!-- EXCEL / HATALI İNDİRME BÖLGE SEÇİM MODALI -->
+<div id="excel-region-modal" class="modal" style="display: none;">
+    <div class="smart-modal-content">
+        <h4 id="excel-modal-title" style="color: #38bdf8; margin-top: 0; margin-bottom: 10px; font-size: 15px; letter-spacing: 1px; text-transform: uppercase;">📥 EXCEL İNDİRME BÖLGESİ</h4>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Tüm bölgeleri mi indirmek istiyorsunuz, yoksa istediğiniz bölgeyi seçmek mi?</p>
+        
+        <button class="smart-btn" style="background: #0369a1; border-color: #0ea5e9;" onclick="triggerExcelAction('HEPSİ')">🌍 TÜM BÖLGELERİ İNDİR</button>
+        <div style="margin: 12px 0; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">-- VEYA İSTEDİĞİNİZ BÖLGEYİ SEÇİNİZ --</div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('AFYON')">AFYON</button>
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('ALANYA')">ALANYA</button>
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('ANKARA')">ANKARA</button>
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('ANTALYA')">ANTALYA</button>
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('KÜTAHYA')">KÜTAHYA</button>
+            <button class="smart-btn" style="margin:0;" onclick="triggerExcelAction('MANAVGAT')">MANAVGAT</button>
+        </div>
+
+        <button style="margin-top: 5px; color: var(--danger); background: none; border: none; cursor: pointer; font-weight: bold;" onclick="closeExcelModal()">İptal</button>
+    </div>
+</div>
+
+<div class="app-container">
+    <div class="hata-banner" id="hataBanner">
+        <span id="hataBannerMetin">⚠️ Veri yüklenemedi. Bağlantınızı kontrol edin.</span>
+        <button onclick="veriYukle(false)">TEKRAR DENE</button>
+    </div>
+
+    <div class="region-grid" id="regionDashboard"></div>
+
+    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; background: var(--dark); padding: 12px; border-radius: 12px; gap: 10px; flex-wrap: wrap;">
+        <div style="text-align: center; flex-shrink: 0; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn" style="background: var(--success); color: white;" onclick="yeniKayitModu()">+ YENİ KONTROL GİRİŞİ</button>
+            <button class="btn" style="background: #0284c7; color: white;" onclick="openExcelModal(false)">📥 EXCEL İNDİR</button>
+            <button class="btn" style="background: var(--danger); color: white;" onclick="openExcelModal(true)">🚨 HATALILARI İNDİR</button>
+        </div>
+        
+        <div id="statusMessageBar" style="color: #fbbf24; font-size: 13px; font-weight: 600; text-align: center; flex: 1; min-width: 250px; padding: 6px 12px; background: rgba(255,255,255,0.06); border-radius: 8px; letter-spacing: 0.3px;">
+            Sistem hazır.
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; color: white; font-size: 12px; flex-shrink: 0;">
+            SÜZ: <select id="regionFilter" onchange="askUserChoice()" style="padding: 5px; border-radius: 6px; border: none;">
+                <option value="HEPSİ">TÜM BÖLGELER</option>
+                <option value="AFYON">AFYON</option><option value="ALANYA">ALANYA</option><option value="ANKARA">ANKARA</option><option value="ANTALYA">ANTALYA</option><option value="KÜTAHYA">KÜTAHYA</option><option value="MANAVGAT">MANAVGAT</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-wrapper" id="formArea">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center;">
+            <h3 id="formTitle" style="margin:0;">✍️ Kayıt Formu</h3>
+            <button class="btn" style="background:#eee;" onclick="formuKapat()">Kapat</button>
+        </div>
+        <div class="form-grid">
+            <div class="input-group"><label>Tarih</label><input type="date" id="f_tarih" class="ctrl-user"></div>
+            <div class="input-group"><label>Bölge</label><select id="f_dist" class="ctrl-user"><option value="AFYON">AFYON</option><option value="ALANYA">ALANYA</option><option value="ANKARA">ANKARA</option><option value="ANTALYA">ANTALYA</option><option value="KÜTAHYA">KÜTAHYA</option><option value="MANAVGAT">MANAVGAT</option></select></div>
+            <div class="input-group"><label>Plaka</label><input type="text" id="f_plaka" class="ctrl-user" placeholder="07 ABC 123"></div>
+            <div class="input-group"><label>Kaporta</label><select id="f_kaporta" class="ctrl-user"><option value="SORUN YOK">SORUN YOK</option><option value="SORUN VAR">SORUN VAR</option></select></div>
+            <div class="input-group"><label>Yağ %</label><input type="number" id="f_yag" class="ctrl-user"></div>
+            <div class="input-group"><label>Su %</label><input type="number" id="f_su" class="ctrl-user"></div>
+            <div class="input-group"><label>Soğutma %</label><input type="number" id="f_sog" class="ctrl-user"></div>
+            <div class="input-group"><label>Arvento</label><select id="f_arvento" class="ctrl-user"><option value="DOĞRU">DOĞRU</option><option value="YANLIŞ">YANLIŞ</option></select></div>
+            
+            <div class="input-group not-group">
+                <label>Not</label>
+                <input type="text" id="f_not" class="ctrl-user" placeholder="Sorun Yoksa ''PROBLEM GÖRÜLMEDİ''  ,   Sorun Varsa ''PROBLEMİ BURAYA YAZINIZ.">
+            </div>
+            
+            <div class="dsm-area">
+                <div class="input-group">
+                    <label style="color: #c2410c;">🔒 DSM MÜDAHALE AÇIKLAMASI (Sadece DSM)</label>
+                    <input type="text" id="f_dsm" disabled placeholder="Şifre ile giriş yapıldığında açılır.">
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button class="btn" style="background: var(--primary); color: white; width: 100%; max-width: 280px;" id="saveBtn" onclick="veriyiKaydet()">KAYDET</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 120px;">TARİH</th>
+                    <th style="width: 100px;">BÖLGE</th>
+                    <th style="width: 130px;">PLAKA</th>
+                    <th>YAĞ %</th>
+                    <th>SU %</th>
+                    <th>SOĞUTMA %</th>
+                    <th style="width: 100px;">KAPORTA</th>
+                    <th style="width: 100px;">ARVENTO</th>
+                    <th>NOT</th>
+                    <th>DSM NOTU</th>
+                    <th style="width: 100px;">İŞLEM</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <h3>Yetki Doğrulama</h3>
+    <input type="password" id="authPass" placeholder="Şifre" style="width:100%; margin-bottom:15px; text-align:center; padding:10px; border-radius:8px; border:1px solid #ddd;">
+    <div style="display:flex; gap:10px;">
+      <button class="btn" style="flex:1; background:#eee;" onclick="closeAuth()">İPTAL</button>
+      <button class="btn" style="flex:1; background:var(--dark); color:white;" onclick="checkLogin()">GİRİŞ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzymEcjOafbJMX1JOl_nhVpBTlw4P90J7_MfNrn9qUmKZbpJX_kzX91qGc_fRtz7fT5/exec";
+  const _0xDSM = { "AFYON": "ODA3OQ==", "ALANYA": "MDA3OA==", "ANKARA": "MDI0Mg==", "ANTALYA": "MTYwNg==", "KÜTAHYA": "NTE4MA==", "MANAVGAT": "MDQ0NA==" };
+  const _0xAdm = "MjU5MDEy";
+
+  let dataset = [];
+  let currentID = null;
+  let activePass = "";
+  let sadeceAçıklamasızSorunlar = false; 
+  let messageTimeout = null;
+  let excelSadeceHatalilarModu = false;
+
+  window.onload = () => veriYukle(false);
+
+  // --- AKILLI YENİDEN DENEME (RETRY) MEKANİZMASI İLE HIZLI YÜKLEME ---
+  async function veriYukle(sessiz = false) {
+    const banner = document.getElementById("hataBanner");
+    let denemeSayisi = 0;
+    const maksimumDeneme = 2; // İlk hata olursa arkada 1 kez daha otomatik dener
+
+    while (denemeSayisi < maksimumDeneme) {
+      try {
+        if (!sessiz && denemeSayisi === 0) {
+          toastGoster("Sunucuya Bağlanılıyor... Veriler Çekiliyor Ve Hazırlanıyor... Lütfen Sayfayı Yenilemeyiniz.... Sistem Otomatik Yapmaktadır.", "warning", false);
+        } else if (denemeSayisi > 0) {
+          toastGoster("Sunucu yanıtı bekleniyor (Yeniden deneniyor)...", "warning", false);
+        }
+
+        // Zaman aşımı (Timeout) kontrolü ekledik (15 saniye)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch(API_URL + "?read=true", { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error("Sunucu " + res.status + " döndürdü");
+        
+        dataset = await res.json();
+        dataset.sort((a,b) => b.rowNumber - a.rowNumber);
+        dashboardCiz();
+        tabloCiz();
+        banner.style.display = "none";
+        
+        if (!sessiz) {
+          toastGoster("✅ Veriler başarıyla yüklendi", "success", true);
+        }
+        return; // Başarılı olursa döngüden çık
+      } catch (e) {
+        denemeSayisi++;
+        console.warn(`Veri yükleme denemesi ${denemeSayisi} başarısız:`, e);
+        
+        if (denemeSayisi >= maksimumDeneme) {
+          // Tüm denemeler bittiyse hatayı göster
+          if (sessiz) {
+            toastGoster("⚠️ Sunucuyla senkronize edilemedi", "error", true);
+          } else {
+            document.getElementById("hataBannerMetin").innerText = "⚠️ Veri yüklenemedi. İnternet bağlantınızı veya sunucu adresini kontrol edin.";
+            banner.style.display = "flex";
+            toastGoster("❌ Veri yüklenemedi.", "error", true);
+          }
+        } else {
+          // İkinci denemeden önce 1 saniye bekleyip tekrar vuralım
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+  }
+
+  function toastGoster(mesaj, tip = "success", otomatikKapat = false) {
+    const bar = document.getElementById("statusMessageBar");
+    if (!bar) return;
+    
+    if (messageTimeout) {
+      clearTimeout(messageTimeout);
+      messageTimeout = null;
+    }
+
+    bar.innerText = mesaj;
+    
+    if (tip === "success") bar.style.color = "#34d399";
+    else if (tip === "error") bar.style.color = "#f87171";
+    else if (tip === "warning") bar.style.color = "#fbbf24";
+    else bar.style.color = "#cbd5e1";
+
+    if (otomatikKapat) {
+      messageTimeout = setTimeout(() => {
+        bar.innerText = "Sistem hazır.";
+        bar.style.color = "#fbbf24";
+      }, 3500);
+    }
+  }
+
+  function renderLevel(val, tip) {
+    val = parseInt(val) || 0;
+    let color = "var(--success)";
+    
+    if (tip === "YAG" || tip === "SU") {
+      if (val <= 50) color = "var(--danger)";
+      else if (val <= 75) color = "var(--warning)";
+      else color = "var(--success)";
+    } 
+    else if (tip === "SOGUTMA") {
+      if (val <= 65) color = "var(--danger)";
+      else if (val <= 80) color = "var(--warning)";
+      else color = "var(--success)";
+    }
+
+    return `
+      <div class="level-container">
+        <div class="level-bar-bg">
+          <div class="level-bar-fill" style="width: ${val}%; background: ${color};"></div>
+        </div>
+        <span class="level-text" style="color: ${color}">%${val}</span>
+      </div>`;
+  }
+
+  function kontrolRiskliMiDegerler(yag, su, sog, kaporta, arvento) {
+    const yagVal = parseInt(yag) || 0;
+    const suVal = parseInt(su) || 0;
+    const sogutmaVal = parseInt(sog) || 0;
+
+    const yagKritik = yagVal <= 50;       
+    const suKritik = suVal <= 50;         
+    const sogutmaKritik = sogutmaVal <= 65; 
+
+    const kaportaVal = (kaporta || "").trim().toUpperCase();
+    const kaportaKritik = kaportaVal !== "" && kaportaVal !== "SORUN YOK";
+
+    const arventoKritik = (arvento || "").includes("YANLIŞ");
+    
+    return (yagKritik || suKritik || sogutmaKritik || kaportaKritik || arventoKritik);
+  }
+
+  function kontrolRiskliMi(item) {
+    return kontrolRiskliMiDegerler(
+      item["YAĞ %"], 
+      item["SU %"], 
+      item["SOĞUTMA %"], 
+      item["KAPORTA KONTROL"], 
+      item["ARVENTO-OPERATÖR LİSTE DOĞRULUĞU"]
+    );
+  }
+
+  function dashboardCiz() {
+    const dash = document.getElementById("regionDashboard"); dash.innerHTML = "";
+    ["AFYON", "ALANYA", "ANKARA", "ANTALYA", "KÜTAHYA", "MANAVGAT"].forEach(b => {
+      const k = dataset.filter(x => x["DİSTRİBÜTÖR"] === b && kontrolRiskliMi(x) && !x["DSM NOTU"]).length;
+      dash.innerHTML += `
+        <div class="region-card" style="border-bottom: 4px solid ${k>0?'var(--danger)':'var(--success)'}">
+          <h4>${b}</h4>
+          <div class="count" style="color:${k>0?'var(--danger)':'var(--dark)'}">${k}</div>
+        </div>`;
+    });
+  }
+
+  function formatTarihGoster(tarihStr) {
+    if (!tarihStr) return "-";
+    try {
+      if (tarihStr.includes("T")) {
+        const temizTarih = tarihStr.split("T")[0]; 
+        const [yil, ay, gun] = temizTarih.split("-");
+        return `${gun}-${ay}-${yil}`;
+      }
+      
+      const temiz = tarihStr.split(" ")[0]; 
+      const parcalar = temiz.includes(".") ? temiz.split(".") : temiz.split("-");
+      
+      if (parcalar.length === 3) {
+        if (parcalar[0].length === 4) { 
+          return `${parcalar[2]}-${parcalar[1]}-${parcalar[0]}`;
+        }
+        return `${parcalar[0].padStart(2,'0')}-${parcalar[1].padStart(2,'0')}-${parcalar[2]}`;
+      }
+      return tarihStr;
+    } catch (e) {
+      return tarihStr;
+    }
+  }
+
+  function askUserChoice() {
+    const filter = document.getElementById("regionFilter").value;
+    if (filter === "HEPSİ") {
+      sadeceAçıklamasızSorunlar = false;
+      tabloCiz();
+    } else {
+      document.getElementById("modal-title").innerText = `${filter} BÖLGE SEÇİMİ`;
+      document.getElementById("selection-modal").style.display = "flex";
+    }
+  }
+
+  function closeSelectionModal() {
+    document.getElementById("selection-modal").style.display = "none";
+  }
+
+  function applySmartFilter(mode) {
+    closeSelectionModal();
+    if (mode === 'problem_no_dsm') {
+      sadeceAçıklamasızSorunlar = true;
+    } else {
+      sadeceAçıklamasızSorunlar = false;
+    }
+    tabloCiz();
+  }
+
+  function openExcelModal(sadeceHatalilar) {
+    excelSadeceHatalilarModu = sadeceHatalilar;
+    const titleEl = document.getElementById("excel-modal-title");
+    if (sadeceHatalilar) {
+      titleEl.innerText = "🚨 HATALI VERİLERİ İNDİR";
+    } else {
+      titleEl.innerText = "📥 TÜM VERİLERİ İNDİR";
+    }
+    document.getElementById("excel-region-modal").style.display = "flex";
+  }
+
+  function closeExcelModal() {
+    document.getElementById("excel-region-modal").style.display = "none";
+  }
+
+  function triggerExcelAction(secilenBolge) {
+    closeExcelModal();
+    excelAktar(excelSadeceHatalilarModu, secilenBolge);
+  }
+
+  function tabloCiz() {
+    const tbody = document.getElementById("tbody");
+    const filter = document.getElementById("regionFilter").value;
+    
+    tbody.innerHTML = "";
+    dataset.forEach(item => {
+      if(filter !== "HEPSİ" && item["DİSTRİBÜTÖR"] !== filter) return;
+      
+      const risk = kontrolRiskliMi(item);
+      const dsmNotVarMi = item["DSM NOTU"] ? true : false;
+      const yanipSon = risk && !dsmNotVarMi;
+      
+      if (filter !== "HEPSİ" && sadeceAçıklamasızSorunlar) {
+        if (!risk || dsmNotVarMi) return;
+      }
+      
+      let dsmStatusText = "";
+      let dsmStatusColor = "";
+      
+      if (item["DSM NOTU"]) {
+        dsmStatusText = item["DSM NOTU"];
+        dsmStatusColor = "#1e293b"; 
+      } else if (risk) {
+        dsmStatusText = "DSM AÇIKLAMASI BEKLENİYOR";
+        dsmStatusColor = "var(--danger)"; 
+      } else {
+        dsmStatusText = "OK";
+        dsmStatusColor = "green"; 
+      }
+
+      const arventoDeger = item["ARVENTO-OPERATÖR LİSTE DOĞRULUĞU"] || "DOĞRU";
+      let gorunenTarih = formatTarihGoster(item["TARİH"]);
+
+      const kaportaMetin = item["KAPORTA KONTROL"] || "OK";
+      const kaportaSorunlu = (kaportaMetin.trim().toUpperCase() !== "OK" && kaportaMetin.trim().toUpperCase() !== "SORUN YOK");
+
+      tbody.innerHTML += `<tr>
+        <td style="font-size:12px; font-weight:700; color:#334155;">${gorunenTarih}</td>
+        <td><b>${item["DİSTRİBÜTÖR"]}</b></td>
+        <td><div class="plaka-box">${item["ARAÇ PLAKA"]}</div></td>
+        <td>${renderLevel(item["YAĞ %"], "YAG")}</td>
+        <td>${renderLevel(item["SU %"], "SU")}</td>
+        <td>${renderLevel(item["SOĞUTMA %"], "SOGUTMA")}</td>
+        <td style="color:${kaportaSorunlu?'red':'green'}; font-weight:700;">${kaportaMetin}</td>
+        <td style="color:${arventoDeger === 'YANLIŞ'?'red':'green'}; font-weight:700;">${arventoDeger}</td>
+        <td style="font-size:11px;">${item["KONTROLCÜ NOTU"] || "-"}</td>
+        <td style="font-weight:700; font-size:11px; color:${dsmStatusColor}">${dsmStatusText}</td>
+        <td><button class="btn ${yanipSon?'btn-pulse':''}" style="background:var(--dark); color:white;" onclick="authAc(${item.rowNumber})">DÜZENLE</button></td>
+      </tr>`;
+    });
+  }
+
+  function authAc(rowId) { currentID = rowId; document.getElementById("authPass").value = ""; document.getElementById("authModal").style.display = "flex"; }
+  function closeAuth() { document.getElementById("authModal").style.display = "none"; }
+  
+  function checkLogin() {
+    const pass = document.getElementById("authPass").value;
+    const item = dataset.find(x => x.rowNumber === currentID);
+    activePass = pass;
+    if (btoa(pass) === _0xAdm) { formuAc(item, "ADMIN"); }
+    else if (btoa(pass) === _0xDSM[item["DİSTRİBÜTÖR"]]) { formuAc(item, "DSM"); }
+    else { alert("Yetkisiz Şifre!"); return; }
+    closeAuth();
+  }
+
+  function formuAc(item, role) {
+    document.getElementById("formArea").style.display = "block";
+    document.getElementById("formTitle").innerText = "📝 Kayıt Düzenleme Formu";
+    document.getElementById("f_dist").value = item["DİSTRİBÜTÖR"];
+    document.getElementById("f_plaka").value = item["ARAÇ PLAKA"];
+    document.getElementById("f_yag").value = item["YAĞ %"];
+    document.getElementById("f_su").value = item["SU %"];
+    document.getElementById("f_sog").value = item["SOĞUTMA %"];
+    document.getElementById("f_kaporta").value = item["KAPORTA KONTROL"] || "SORUN YOK";
+    document.getElementById("f_arvento").value = item["ARVENTO-OPERATÖR LİSTE DOĞRULUĞU"] || "DOĞRU";
+    document.getElementById("f_not").value = item["KONTROLCÜ NOTU"] || "";
+    document.getElementById("f_dsm").value = item["DSM NOTU"] || "";
+
+    try {
+        if (item["TARİH"]) {
+            let temizTarih = item["TARİH"];
+            if (temizTarih.includes("T")) temizTarih = temizTarih.split("T")[0];
+            else temizTarih = temizTarih.split(" ")[0];
+
+            const parcalar = temizTarih.includes(".") ? temizTarih.split(".") : temizTarih.split("-");
+            
+            if (parcalar.length === 3) {
+                if (parcalar[0].length === 4) { 
+                    document.getElementById("f_tarih").value = `${parcalar[0]}-${parcalar[1].padStart(2,'0')}-${parcalar[2].padStart(2,'0')}`;
+                } else { 
+                    document.getElementById("f_tarih").value = `${parcalar[2]}-${parcalar[1].padStart(2,'0')}-${parcalar[0].padStart(2,'0')}`;
+                }
+            } else {
+                varsayilanTarihAta();
+            }
+        } else {
+            varsayilanTarihAta();
+        }
+    } catch(e) {
+        varsayilanTarihAta();
+    }
+
+    if(role === "DSM") {
+        document.querySelectorAll(".ctrl-user").forEach(i => i.disabled = true);
+        document.getElementById("f_dsm").disabled = false;
+        document.getElementById("f_dsm").focus();
+    } else {
+        document.querySelectorAll(".ctrl-user").forEach(i => i.disabled = false);
+        document.getElementById("f_dsm").disabled = true;
+    }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function varsayilanTarihAta() {
+    const bugun = new Date();
+    document.getElementById("f_tarih").value = `${bugun.getFullYear()}-${String(bugun.getMonth() + 1).padStart(2, '0')}-${String(bugun.getDate()).padStart(2, '0')}`;
+  }
+
+  function yeniKayitModu() {
+    currentID = null; 
+    activePass = atob(_0xAdm); 
+    document.getElementById("formArea").style.display = "block";
+    document.getElementById("formTitle").innerText = "✍️ Yeni Kayıt Formu";
+    document.querySelectorAll(".ctrl-user").forEach(i => { i.value = ""; i.disabled = false; });
+    document.getElementById("f_dsm").disabled = true;
+    document.getElementById("f_kaporta").value = "SORUN YOK";
+    document.getElementById("f_arvento").value = "DOĞRU";
+    varsayilanTarihAta();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function formuKapat() { document.getElementById("formArea").style.display = "none"; }
+
+  function excelAktar(sadeceHatalilar = false, hedefBolge = "HEPSİ") {
+    let filtrelenmisVeri = dataset.filter(item => {
+      if (hedefBolge !== "HEPSİ" && item["DİSTRİBÜTÖR"] !== hedefBolge) return false;
+      if (sadeceHatalilar && !kontrolRiskliMi(item)) return false;
+      return true;
+    });
+
+    if (filtrelenmisVeri.length === 0) {
+      toastGoster("⚠️ Dışa aktarılacak uygun veri bulunamadı.", "warning", true);
+      return;
+    }
+
+    let csvContent = "\uFEFF"; 
+    csvContent += "TARİH;BÖLGE;PLAKA;YAĞ %;SU %;SOĞUTMA %;KAPORTA;ARVENTO;NOT;DSM NOTU\n";
+
+    filtrelenmisVeri.forEach(item => {
+      const tarih = formatTarihGoster(item["TARİH"]) || "";
+      const dist = item["DİSTRİBÜTÖR"] || "";
+      const plaka = item["ARAÇ PLAKA"] || "";
+      const yag = item["YAĞ %"] || "";
+      const su = item["SU %"] || "";
+      const sog = item["SOĞUTMA %"] || "";
+      const kaporta = item["KAPORTA KONTROL"] || "";
+      const arvento = item["ARVENTO-OPERATÖR LİSTE DOĞRULUĞU"] || "";
+      const not = (item["KONTROLCÜ NOTU"] || "").replace(/;/g, ",");
+      const dsm = (item["DSM NOTU"] || "").replace(/;/g, ",");
+
+      csvContent += `${tarih};${dist};${plaka};${yag};${su};${sog};${kaporta};${arvento};${not};${dsm}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const dosyaAdiTuru = sadeceHatalilar ? "HATALI_KAYITLAR" : "TUM_KAYITLAR";
+    link.setAttribute("download", `Arac_Kontrol_${hedefBolge}_${dosyaAdiTuru}_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toastGoster(`✅ (${hedefBolge}) Excel dosyası başarıyla indirildi.`, "success", true);
+  }
+
+  async function veriyiKaydet() {
+    const btn = document.getElementById("saveBtn");
+    const isControlUser = !document.getElementById("f_plaka").disabled;
+
+    if (isControlUser) {
+      const notAlani = document.getElementById("f_not").value.trim();
+      const kaportaDurumu = document.getElementById("f_kaporta").value.trim().toUpperCase();
+
+      if (kaportaDurumu === "SORUN VAR" && (notAlani === "" || notAlani.toUpperCase() === "PROBLEM GÖRÜLMEDİ")) {
+        toastGoster("⚠️ Lütfen 'PROBLEMİ YAZINIZ'", "error", true);
+        document.getElementById("f_not").focus();
+        return;
+      }
+
+      if (notAlani === "") {
+        toastGoster("⚠️ Lütfen 'PROBLEM GÖRÜLMEDİ' yazınız", "error", true);
+        document.getElementById("f_not").focus();
+        return;
+      }
+    }
+
+    btn.disabled = true; 
+    btn.innerText = "⏳ Kaydediliyor (Lütfen Bekleyin)...";
+    toastGoster("⏳ Veri sunucuya gönderiliyor ve işleniyor, lütfen bekleyiniz...", "warning", false);
+    
+    const secilenTarih = document.getElementById("f_tarih").value;
+    let formatliTarih = "";
+    if (secilenTarih && secilenTarih.includes("-")) {
+        const [yil, ay, gun] = secilenTarih.split("-");
+        formatliTarih = `${gun}-${ay}-${yil}`; 
+    } else {
+        const bugun = new Date();
+        formatliTarih = `${String(bugun.getDate()).padStart(2,'0')}-${String(bugun.getMonth()+1).padStart(2,'0')}-${bugun.getFullYear()}`;
+    }
+
+    const yeniKayit = {
+      "DİSTRİBÜTÖR": document.getElementById("f_dist").value,
+      "ARAÇ PLAKA": document.getElementById("f_plaka").value.toUpperCase(),
+      "YAĞ %": document.getElementById("f_yag").value,
+      "SU %": document.getElementById("f_su").value,
+      "SOĞUTMA %": document.getElementById("f_sog").value,
+      "ARVENTO-OPERATÖR LİSTE DOĞRULUĞU": document.getElementById("f_arvento").value,
+      "KAPORTA KONTROL": document.getElementById("f_kaporta").value,
+      "KONTROLCÜ NOTU": document.getElementById("f_not").value,
+      "DSM NOTU": document.getElementById("f_dsm").value,
+      "TARİH": formatliTarih
+    };
+
+    const payload = {
+      action: currentID ? "update" : "insert",
+      rowNumber: currentID, 
+      sifre: activePass,
+      ...yeniKayit
+    };
+
+    try {
+      const response = await fetch(API_URL, { 
+        method: "POST", 
+        body: JSON.stringify(payload)
+      });
+      
+      if(response.ok) {
+         let sunucuCevabi = null;
+         try { sunucuCevabi = await response.json(); } catch(e) { }
+
+         if (currentID) {
+            const idx = dataset.findIndex(x => x.rowNumber === currentID);
+            if (idx !== -1) {
+               dataset[idx] = { ...dataset[idx], ...yeniKayit, rowNumber: currentID };
+            }
+         } else {
+            const yeniRowNumber = (sunucuCevabi && sunucuCevabi.rowNumber)
+              ? sunucuCevabi.rowNumber
+              : (Math.max(0, ...dataset.map(x => x.rowNumber || 0)) + 1);
+            dataset.unshift({ ...yeniKayit, rowNumber: yeniRowNumber });
+         }
+
+         dataset.sort((a,b) => b.rowNumber - a.rowNumber);
+         dashboardCiz();
+         tabloCiz();
+         formuKapat();
+
+         toastGoster(currentID ? "✅ Kayıt Başarıyla Güncellendi!" : "✅ Yeni Kayıt Başarıyla Eklendi!", "success", true);
+         setTimeout(() => veriYukle(true), 1000);
+      } else {
+         toastGoster("❌ Sunucu hatası oluştu, kayıt yapılamadı.", "error", true);
+      }
+    } catch(e) {
+      toastGoster("❌ Bağlantı hatası! İnternetinizi kontrol edin.", "error", true);
+    } finally {
+      btn.disabled = false; 
+      btn.innerText = "KAYDET";
+    }
+  }
+</script>
+</body>
+</html>
