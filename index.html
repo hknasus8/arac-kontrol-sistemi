@@ -84,6 +84,18 @@
 </head>
 <body>
 
+<!-- TELİF HAKKI AÇILIŞ UYARI MODALI -->
+<div id="telifAcilisModal" class="modal" style="display: flex; background: rgba(0,0,0,0.85); z-index: 9999;">
+    <div class="smart-modal-content" style="border-color: #ef4444; max-width: 450px;">
+        <h3 style="color: #ef4444; margin-top: 0; margin-bottom: 15px; font-size: 18px; letter-spacing: 1px;">⚠️ TELİF HAKKI UYARISI</h3>
+        <p style="font-size: 13px; line-height: 1.6; color: #c9d1d9; margin-bottom: 20px; text-align: left;">
+            Bu projenin (ARAÇ KONTROL MERKEZİ) tüm hakları saklıdır. Halka açık olması, kodların veya uygulamanın izinsiz kopyalanabileceği, değiştirilebileceği, çoğaltılabileceği veya herhangi bir yerde kullanılabileceği anlamına <b>gelmez</b>[cite: 2].<br><br>
+            İzinsiz kullanım tespiti halinde yasal işlem başlatılacaktır.
+        </p>
+        <button class="smart-btn" style="background: #238636; border-color: #2ea043; color: white; font-size: 14px; padding: 12px;" onclick="telifKabulEt()">KABUL EDİYORUM / ANLADIM</button>
+    </div>
+</div>
+
 <!-- BÖLGE TABLO FİLTRELEME MODALI -->
 <div id="selection-modal" class="modal" style="display: none;">
     <div class="smart-modal-content">
@@ -221,6 +233,11 @@
   let excelSadeceHatalilarModu = false;
 
   window.onload = () => veriYukle(false);
+
+  // Telif uyarısı onay fonksiyonu
+  function telifKabulEt() {
+    document.getElementById("telifAcilisModal").style.display = "none";
+  }
 
   // --- AKILLI YENİDEN DENEME (RETRY) MEKANİZMASI İLE HIZLI YÜKLEME ---
   async function veriYukle(sessiz = false) {
@@ -675,34 +692,4 @@
          try { sunucuCevabi = await response.json(); } catch(e) { }
 
          if (currentID) {
-            const idx = dataset.findIndex(x => x.rowNumber === currentID);
-            if (idx !== -1) {
-               dataset[idx] = { ...dataset[idx], ...yeniKayit, rowNumber: currentID };
-            }
-         } else {
-            const yeniRowNumber = (sunucuCevabi && sunucuCevabi.rowNumber)
-              ? sunucuCevabi.rowNumber
-              : (Math.max(0, ...dataset.map(x => x.rowNumber || 0)) + 1);
-            dataset.unshift({ ...yeniKayit, rowNumber: yeniRowNumber });
-         }
-
-         dataset.sort((a,b) => b.rowNumber - a.rowNumber);
-         dashboardCiz();
-         tabloCiz();
-         formuKapat();
-
-         toastGoster(currentID ? "✅ Kayıt Başarıyla Güncellendi!" : "✅ Yeni Kayıt Başarıyla Eklendi!", "success", true);
-         setTimeout(() => veriYukle(true), 1000);
-      } else {
-         toastGoster("❌ Sunucu hatası oluştu, kayıt yapılamadı.", "error", true);
-      }
-    } catch(e) {
-      toastGoster("❌ Bağlantı hatası! İnternetinizi kontrol edin.", "error", true);
-    } finally {
-      btn.disabled = false; 
-      btn.innerText = "KAYDET";
-    }
-  }
-</script>
-</body>
-</html>
+            const idx = dataset
