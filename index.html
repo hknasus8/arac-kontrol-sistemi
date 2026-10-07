@@ -232,18 +232,19 @@
             Bu projenin (ARAÇ KONTROL MERKEZİ) tüm hakları saklıdır. Halka açık olması, kodların veya uygulamanın izinsiz kopyalanabileceği, değiştirilebileceği, çoğaltılabileceği veya herhangi bir yerde kullanılabileceği anlamına <b>gelmez</b>.<br><br>
             İzinsiz kullanım tespiti halinde yasal işlem başlatılacaktır.
         </p>
-        <button class="smart-btn" style="background: #238636; border-color: #2ea043; color: white; font-size: 14px; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold;" onclick="telifKabulEt()">KABUL EDİYORUM / ANLADIM</button>
+        <button id="telifKabulBtn" class="smart-btn" style="background: #238636; border-color: #2ea043; color: white; font-size: 14px; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold;">KABUL EDİYORUM / ANLADIM</button>
       </div>
     `;
     document.body.appendChild(telifDiv);
+
+    // Butona güvenli bir şekilde dinleyici ekleyelim
+    document.getElementById("telifKabulBtn").addEventListener("click", () => {
+      const modal = document.getElementById("telifAcilisModal");
+      if (modal) modal.remove();
+    });
+
     veriYukle(false);
   });
-
-  // Telif uyarısı onay fonksiyonu
-  function telifKabulEt() {
-    const modal = document.getElementById("telifAcilisModal");
-    if (modal) modal.remove();
-  }
 
   // --- AKILLI YENİDEN DENEME (RETRY) MEKANİZMASI İLE HIZLI YÜKLEME ---
   async function veriYukle(sessiz = false) {
