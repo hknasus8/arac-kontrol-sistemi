@@ -12,7 +12,7 @@
     }
 
     * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background: var(--bg); margin: 0; padding: 10px; color: var(--dark); display: flex; justify-content: center; position: relative; min-height: 100vh; }
+    body { background: var(--bg); margin: 0; padding: 10px; color: var(--dark); display: flex; justify-content: center; }
     
     .app-container { width: 100%; max-width: 1400px; }
 
@@ -220,31 +220,7 @@
   let messageTimeout = null;
   let excelSadeceHatalilarModu = false;
 
-  // Sayfa açıldığında telif modalını en üste enjekte et ve göster
-  window.addEventListener('DOMContentLoaded', () => {
-    const telifDiv = document.createElement('div');
-    telifDiv.id = "telifAcilisModal";
-    telifDiv.style.cssText = "display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(5px);";
-    telifDiv.innerHTML = `
-      <div class="smart-modal-content" style="border-color: #ef4444; max-width: 450px; background: #161b22; color: #c9d1d9; border: 2px solid #ef4444; padding: 30px; border-radius: 15px; text-align: center;">
-        <h3 style="color: #ef4444; margin-top: 0; margin-bottom: 15px; font-size: 18px; letter-spacing: 1px;">⚠️ TELİF HAKKI UYARISI</h3>
-        <p style="font-size: 13px; line-height: 1.6; color: #c9d1d9; margin-bottom: 20px; text-align: left;">
-            Bu projenin (ARAÇ KONTROL MERKEZİ) tüm hakları saklıdır. Halka açık olması, kodların veya uygulamanın izinsiz kopyalanabileceği, değiştirilebileceği, çoğaltılabileceği veya herhangi bir yerde kullanılabileceği anlamına <b>gelmez</b>.<br><br>
-            İzinsiz kullanım tespiti halinde yasal işlem başlatılacaktır.
-        </p>
-        <button id="telifKabulBtn" class="smart-btn" style="background: #238636; border-color: #2ea043; color: white; font-size: 14px; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold;">KABUL EDİYORUM / ANLADIM</button>
-      </div>
-    `;
-    document.body.appendChild(telifDiv);
-
-    // Butona güvenli bir şekilde dinleyici ekleyelim
-    document.getElementById("telifKabulBtn").addEventListener("click", () => {
-      const modal = document.getElementById("telifAcilisModal");
-      if (modal) modal.remove();
-    });
-
-    veriYukle(false);
-  });
+  window.onload = () => veriYukle(false);
 
   // --- AKILLI YENİDEN DENEME (RETRY) MEKANİZMASI İLE HIZLI YÜKLEME ---
   async function veriYukle(sessiz = false) {
