@@ -14,7 +14,7 @@
     * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { background: var(--bg); margin: 0; padding: 10px; color: var(--dark); display: flex; justify-content: center; }
     
-    .app-container { width: 100%; max-width: 1400px; }
+    .app-container { width: 100%; max-width: 1400px; display: none; } /* Başlangıçta gizli */
 
     /* ÜST PANEL (DASHBOARD) */
     .region-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -84,6 +84,17 @@
 </head>
 <body>
 
+<!-- GENEL UYGULAMA GİRİŞ ŞİFRE EKRANI (BAŞLANGIÇTA AÇIK) -->
+<div id="globalAuthModal" class="modal" style="display: flex;">
+  <div class="modal-content" style="background: #161b22; color: white; border: 2px solid #4f46e5;">
+    <h3 style="margin-top:0; color: #4f46e5;">🔒 ARAÇ KONTROL SİSTEMİ</h3>
+    <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Lütfen devam etmek için sistem şifresini giriniz.</p>
+    <input type="password" id="globalPassInput" placeholder="Şifre" style="width:100%; margin-bottom:15px; text-align:center; padding:10px; border-radius:8px; border:1px solid #30363d; background: #0f172a; color: white; outline: none;" onkeydown="if(event.key === 'Enter') globalLoginCheck()">
+    <button class="btn" style="width: 100%; background: var(--primary); color: white;" onclick="globalLoginCheck()">GİRİŞ YAP</button>
+    <div id="globalAuthError" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Hatalı Şifre!</div>
+  </div>
+</div>
+
 <!-- BÖLGE TABLO FİLTRELEME MODALI -->
 <div id="selection-modal" class="modal" style="display: none;">
     <div class="smart-modal-content">
@@ -116,7 +127,7 @@
     </div>
 </div>
 
-<div class="app-container">
+<div class="app-container" id="appContainer">
     <div class="hata-banner" id="hataBanner">
         <span id="hataBannerMetin">⚠️ Veri yüklenemedi. Bağlantınızı kontrol edin.</span>
         <button onclick="veriYukle(false)">TEKRAR DENE</button>
@@ -220,7 +231,20 @@
   let messageTimeout = null;
   let excelSadeceHatalilarModu = false;
 
-  window.onload = () => veriYukle(false);
+  // Ana şifre kontrolü
+  function globalLoginCheck() {
+    const girilenSifre = document.getElementById("globalPassInput").value;
+    const errorEl = document.getElementById("globalAuthError");
+
+    if (girilenSifre === "ozcelik07") {
+      document.getElementById("globalAuthModal").style.display = "none";
+      document.getElementById("appContainer").style.display = "block";
+      veriYukle(false);
+    } else {
+      errorEl.style.display = "block";
+      document.getElementById("globalPassInput").value = "";
+    }
+  }
 
   // --- AKILLI YENİDEN DENEME (RETRY) MEKANİZMASI İLE HIZLI YÜKLEME ---
   async function veriYukle(sessiz = false) {
